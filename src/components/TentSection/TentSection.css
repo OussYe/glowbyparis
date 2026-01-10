@@ -1,0 +1,199 @@
+.tent-section {
+  background: var(--color-bg-secondary);
+  position: relative;
+}
+
+.tent-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at 80% 20%, rgba(0, 212, 170, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Features Grid */
+.tent-section__features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-16);
+  position: relative;
+  z-index: 1;
+}
+
+.feature-card {
+  text-align: center;
+  padding: var(--space-8);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-gray-200);
+}
+
+.feature-card__icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: var(--space-4);
+}
+
+.feature-card__title {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.feature-card__description {
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+/* Gallery */
+.tent-section__gallery {
+  margin-bottom: var(--space-16);
+  position: relative;
+  z-index: 1;
+}
+
+.tent-section__gallery-title,
+.tent-section__video-title {
+  text-align: center;
+  margin-bottom: var(--space-8);
+  color: var(--color-text-primary);
+}
+
+.tent-section__gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.tent-section__gallery-item {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-200);
+  transition: all var(--transition-base);
+}
+
+.tent-section__gallery-item:hover {
+  border-color: var(--color-accent);
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.15);
+}
+
+.tent-section__gallery-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Video */
+.tent-section__video {
+  position: relative;
+  z-index: 1;
+}
+
+.tent-section__video-wrapper {
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-200);
+  background-color: var(--color-bg-card);
+}
+
+.tent-section__video-link {
+  display: block;
+  position: relative;
+  cursor: pointer;
+}
+
+.tent-section__video-thumbnail {
+  width: 100%;
+  display: block;
+  transition: transform var(--transition-base);
+}
+
+.tent-section__video-link:hover .tent-section__video-thumbnail {
+  transform: scale(1.02);
+}
+
+.tent-section__video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-bg-primary);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-glow);
+}
+
+.tent-section__video-link:hover .tent-section__video-play {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.tent-section__video-play svg {
+  margin-left: 4px;
+}
+
+.tent-section__video-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-4);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+  color: var(--color-text-primary);
+  text-align: center;
+  font-weight: var(--font-medium);
+}
+
+/* Tablet */
+@media (min-width: 640px) {
+  .tent-section__features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tent-section__gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tent-section__gallery-item img {
+    height: 220px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .tent-section__features {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .feature-card {
+    padding: var(--space-6);
+  }
+
+  .tent-section__gallery-item img {
+    height: 250px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tent-section__gallery-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .tent-section__gallery-item img {
+    height: 220px;
+  }
+
+  .tent-section__video-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
