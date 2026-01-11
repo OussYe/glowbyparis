@@ -6,7 +6,13 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit - GlowByParis baby tent website\n\n- React + Vite setup\n- Dark navy theme with teal accent\n- Hero section with image slider\n- Features section highlighting built-in fan\n- Testimonials with infinite scroll slider\n- Contact form with PHP email backend\n- Responsive mobile-first design\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

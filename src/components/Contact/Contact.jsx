@@ -65,7 +65,7 @@ function Contact() {
     setSubmitError('')
 
     try {
-      const response = await fetch('/send-email.php', {
+      const response = await fetch('https://n8n.dazzleconsulting.fr/webhook/contact-form-glowbyparis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
