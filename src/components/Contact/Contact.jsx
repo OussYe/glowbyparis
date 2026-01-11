@@ -73,13 +73,11 @@ function Contact() {
         body: JSON.stringify(formData),
       })
 
-      const result = await response.json()
-
-      if (result.success) {
+      if (response.ok) {
         setSubmitted(true)
         setFormData({ name: '', email: '', subject: '', message: '' })
       } else {
-        setSubmitError(result.message || 'Failed to send message. Please try again.')
+        setSubmitError('Failed to send message. Please try again.')
       }
     } catch (error) {
       setSubmitError('Failed to send message. Please try again or email us directly.')
