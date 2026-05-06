@@ -36,7 +36,7 @@ const galleryImages = [
   { src: '/images/2.png', alt: 'Baby playing inside the GlowByParis beach tent with fan and mini pool' },
   { src: '/images/6.png', alt: 'Play time and nap time mode of the GlowByParis tent' },
   { src: '/images/12.png', alt: 'UPF 50+ UV protection shielding baby from the sun' },
-  { src: '/images/11.png', alt: 'Baby splashing in the mini pool with beach tools in side pockets' },
+  { src: '/images/11.jpg', alt: 'Baby splashing in the mini pool with beach tools in side pockets' },
   { src: '/images/1.png', alt: '1 second pop-up design — lightweight and easy to carry' },
   { src: '/images/13.png', alt: 'Full packing list — tent, solar fan, charging cable and pegs' },
 ]
