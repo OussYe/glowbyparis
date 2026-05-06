@@ -3,42 +3,87 @@ import './Hero.css'
 
 function Hero() {
   const videoRef = useRef(null)
-  const [isMuted, setIsMuted] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [showControls, setShowControls] = useState(false)
+  const hideTimerRef = useRef(null)
 
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
-    // Ensure autoplay kicks in on mount (mobile browsers require muted + playsInline)
-    const tryPlay = () => {
-      el.play().catch(() => {
-        /* ignore autoplay rejection */
-      })
+
+    const tryPlay = () => el.play().catch(() => {})
+    if (el.readyState >= 2) tryPlay()
+    else el.addEventListener('loadeddata', tryPlay, { once: true })
+
+    const onTimeUpdate = () => {
+      setCurrentTime(el.currentTime)
+      setProgress(el.duration ? (el.currentTime / el.duration) * 100 : 0)
     }
-    if (el.readyState >= 2) {
-      tryPlay()
-    } else {
-      el.addEventListener('loadeddata', tryPlay, { once: true })
+    const onMetadata = () => setDuration(el.duration)
+    const onPlay = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
+
+    el.addEventListener('timeupdate', onTimeUpdate)
+    el.addEventListener('loadedmetadata', onMetadata)
+    el.addEventListener('play', onPlay)
+    el.addEventListener('pause', onPause)
+
+    return () => {
+      el.removeEventListener('timeupdate', onTimeUpdate)
+      el.removeEventListener('loadedmetadata', onMetadata)
+      el.removeEventListener('play', onPlay)
+      el.removeEventListener('pause', onPause)
     }
   }, [])
 
-  const toggleMute = () => {
+  const revealControls = () => {
+    setShowControls(true)
+    clearTimeout(hideTimerRef.current)
+    hideTimerRef.current = setTimeout(() => setShowControls(false), 2500)
+  }
+
+  const handleFrameClick = () => {
+    revealControls()
+  }
+
+  const togglePlay = (e) => {
+    e.stopPropagation()
     const el = videoRef.current
     if (!el) return
-    el.muted = !el.muted
-    setIsMuted(el.muted)
+    if (el.paused) el.play()
+    else el.pause()
+  }
+
+  const seek = (e, seconds) => {
+    e.stopPropagation()
+    const el = videoRef.current
+    if (!el) return
+    el.currentTime = Math.max(0, Math.min(el.duration || 0, el.currentTime + seconds))
+  }
+
+  const handleProgressClick = (e) => {
+    e.stopPropagation()
+    const el = videoRef.current
+    if (!el) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    el.currentTime = ((e.clientX - rect.left) / rect.width) * (el.duration || 0)
+  }
+
+  const formatTime = (s) => {
+    if (!s || isNaN(s)) return '0:00'
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
   }
 
   const scrollToSection = (e, sectionId) => {
     e.preventDefault()
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
     <section id="hero" className="hero">
-      {/* Ambient background */}
       <div className="hero__backdrop">
         <div className="hero__blob hero__blob--1" />
         <div className="hero__blob hero__blob--2" />
@@ -90,19 +135,8 @@ function Hero() {
               onClick={(e) => scrollToSection(e, 'innovation')}
             >
               Discover the Innovation
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                width="18"
-                height="18"
-              >
-                <path
-                  d="M5 12h14M13 5l7 7-7 7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="18" height="18">
+                <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
             <a
@@ -127,14 +161,18 @@ function Hero() {
           </div>
         </div>
 
-        {/* Visual showcase: live folding demo video */}
         <div className="hero__visual">
-          <div className="hero__video-frame">
+          <div
+            className="hero__video-frame"
+            onMouseMove={revealControls}
+            onMouseEnter={revealControls}
+            onMouseLeave={() => { clearTimeout(hideTimerRef.current); setShowControls(false) }}
+            onClick={handleFrameClick}
+          >
             <video
               ref={videoRef}
               className="hero__video"
-              src="/videos/folding_tent.mov"
-              poster="/images/folding_poster.jpg"
+              src="/videos/folding_tent.MP4"
               autoPlay
               muted
               loop
@@ -142,47 +180,58 @@ function Hero() {
               preload="auto"
             />
 
-            <div className="hero__video-topbar">
-              <span className="hero__video-chip">
-                <span className="hero__video-chip-dot" />
-                Live Demo · Folding
-              </span>
-              <button
-                type="button"
-                className="hero__video-mute"
-                onClick={toggleMute}
-                aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-              >
-                {isMuted ? (
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                    <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" opacity="0.4" />
-                    <path d="M4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.17v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM12 4L9.91 6.09 12 8.18V4z" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                    <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            <div className="hero__video-caption">
-              <strong>How to fold the tent</strong>
-              <small>No struggle. Under 10 seconds.</small>
-            </div>
-
-            <div className="hero__badge hero__badge--top">
-              <span className="hero__badge-icon">☀️</span>
-              <div>
-                <strong>Solar Powered</strong>
-                <small>USB-C backup</small>
+            <div className={`hero__vc${showControls ? ' hero__vc--visible' : ''}`}>
+              <div className="hero__vc-progress" onClick={handleProgressClick}>
+                <div className="hero__vc-bar" style={{ width: `${progress}%` }} />
+                <div className="hero__vc-thumb" style={{ left: `${progress}%` }} />
               </div>
-            </div>
-            <div className="hero__badge hero__badge--bottom">
-              <span className="hero__badge-icon">🌊</span>
-              <div>
-                <strong>Mini Pool</strong>
-                <small>Safe splash zone</small>
+              <div className="hero__vc-row">
+                <div className="hero__vc-left">
+                  <button
+                    type="button"
+                    className="hero__vc-btn"
+                    onClick={(e) => seek(e, -10)}
+                    aria-label="Reculer 10 secondes"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                      <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                    </svg>
+                    <span className="hero__vc-skip-n">10</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hero__vc-btn hero__vc-btn--play"
+                    onClick={togglePlay}
+                    aria-label={isPlaying ? 'Pause' : 'Lecture'}
+                  >
+                    {isPlaying ? (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hero__vc-btn"
+                    onClick={(e) => seek(e, 10)}
+                    aria-label="Avancer 10 secondes"
+                  >
+                    <span className="hero__vc-skip-n">10</span>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                      <path d="M12 5V1l5 5-5 5V7C8.69 7 6 9.69 6 13s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" />
+                    </svg>
+                  </button>
+                </div>
+
+                <span className="hero__vc-time">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
               </div>
             </div>
           </div>

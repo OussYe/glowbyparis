@@ -28,7 +28,7 @@ const innovations = [
       'Shaded from harmful UV rays',
       'Drains and folds dry in seconds',
     ],
-    image: '/images/11.png',
+    image: '/images/11.jpg',
     align: 'left',
   },
   {

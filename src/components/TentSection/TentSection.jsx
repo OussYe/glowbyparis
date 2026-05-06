@@ -3,7 +3,7 @@ import './TentSection.css'
 
 const videos = [
   {
-    src: '/videos/folding_tent.mov',
+    src: '/videos/folding_tent.MP4',
     title: 'How To Fold The Tent',
     subtitle: 'Fold it back into its compact carry bag in under 10 seconds.',
     duration: 'Fold',
