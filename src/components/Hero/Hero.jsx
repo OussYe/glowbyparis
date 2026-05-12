@@ -3,12 +3,23 @@ import './Hero.css'
 
 function Hero() {
   const videoRef = useRef(null)
+  const frameRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [isMuted, setIsMuted] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [progress, setProgress] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [showControls, setShowControls] = useState(false)
   const hideTimerRef = useRef(null)
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
 
   useEffect(() => {
     const el = videoRef.current
@@ -45,7 +56,8 @@ function Hero() {
     hideTimerRef.current = setTimeout(() => setShowControls(false), 2500)
   }
 
-  const handleFrameClick = () => {
+  const handleFrameClick = (e) => {
+    togglePlay(e)
     revealControls()
   }
 
@@ -55,6 +67,26 @@ function Hero() {
     if (!el) return
     if (el.paused) el.play()
     else el.pause()
+  }
+
+  const toggleMute = (e) => {
+    e.stopPropagation()
+    const el = videoRef.current
+    if (!el) return
+    const nextMuted = !isMuted
+    el.muted = nextMuted
+    setIsMuted(nextMuted)
+  }
+
+  const toggleFullscreen = (e) => {
+    e.stopPropagation()
+    const frame = frameRef.current
+    if (!frame) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+    } else if (frame.requestFullscreen) {
+      frame.requestFullscreen().catch(() => {})
+    }
   }
 
   const seek = (e, seconds) => {
@@ -162,23 +194,25 @@ function Hero() {
         </div>
 
         <div className="hero__visual">
-          <div
-            className="hero__video-frame"
-            onMouseMove={revealControls}
-            onMouseEnter={revealControls}
-            onMouseLeave={() => { clearTimeout(hideTimerRef.current); setShowControls(false) }}
-            onClick={handleFrameClick}
-          >
-            <video
-              ref={videoRef}
-              className="hero__video"
-              src="/videos/folding_tent.MP4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-            />
+          <div className="hero__video-wrapper">
+            <div
+              className="hero__video-frame"
+              ref={frameRef}
+              onMouseMove={revealControls}
+              onMouseEnter={revealControls}
+              onMouseLeave={() => { clearTimeout(hideTimerRef.current); setShowControls(false) }}
+              onClick={handleFrameClick}
+            >
+              <video
+                ref={videoRef}
+                className="hero__video"
+                src="/videos/folding_tent.mp4"
+                autoPlay
+                muted={isMuted}
+                loop
+                playsInline
+                preload="auto"
+              />
 
             <div className={`hero__vc${showControls ? ' hero__vc--visible' : ''}`}>
               <div className="hero__vc-progress" onClick={handleProgressClick}>
@@ -219,6 +253,43 @@ function Hero() {
                   <button
                     type="button"
                     className="hero__vc-btn"
+                    onClick={toggleMute}
+                    aria-label={isMuted ? 'Activer le son' : 'Couper le son'}
+                  >
+                    {isMuted ? (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M16.5 12c0-1.77-.77-3.36-2-4.44v8.88c1.23-1.08 2-2.67 2-4.44z" opacity=".3" />
+                        <path d="M19 12c0 2.76-1.12 5.26-2.93 7.07l-1.41-1.41A8.96 8.96 0 0 0 17 12c0-1.95-.7-3.74-1.83-5.16L16.5 5.56C18.3 7.12 19 9.47 19 12z" />
+                        <path d="M4 9v6h4l5 5V4L8 9H4zm9.5 1.5L11 10.5V13l2.5-1.5z" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M16.5 12c0-1.77-.77-3.36-2-4.44v8.88c1.23-1.08 2-2.67 2-4.44z" />
+                        <path d="M4 9v6h4l5 5V4L8 9H4zm9.5 1.5L11 10.5V13l2.5-1.5z" />
+                      </svg>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hero__vc-btn hero__vc-btn--fullscreen"
+                    onClick={toggleFullscreen}
+                    aria-label={isFullscreen ? 'Quitter le plein écran' : 'Agrandir'}
+                  >
+                    {isFullscreen ? (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M6 16H4v4h4v-2H6v-2zm0-8h2V6h2V4H4v4h2zm12 8h-2v2h-2v2h4v-4zm-2-8h2V4h-4v2h2v2z" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M4 10V4h6V2H2v8h2zm16-8h-6v2h4v4h2V2zm0 16v6h-6v-2h4v-4h2zm-16 6h6v-2H4v-4H2v6h2z" />
+                      </svg>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hero__vc-btn"
                     onClick={(e) => seek(e, 10)}
                     aria-label="Avancer 10 secondes"
                   >
@@ -234,6 +305,7 @@ function Hero() {
                 </span>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

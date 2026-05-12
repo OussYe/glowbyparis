@@ -3,7 +3,7 @@ import './TentSection.css'
 
 const videos = [
   {
-    src: '/videos/folding_tent.MP4',
+    src: '/videos/folding_tent.mp4',
     title: 'How To Fold The Tent',
     subtitle: 'Fold it back into its compact carry bag in under 10 seconds.',
     duration: 'Fold',
@@ -44,6 +44,7 @@ const galleryImages = [
 function VideoCard({ video, index }) {
   const videoRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
 
   const togglePlay = () => {
     const el = videoRef.current
@@ -55,6 +56,15 @@ function VideoCard({ video, index }) {
       el.pause()
       setIsPlaying(false)
     }
+  }
+
+  const toggleMute = (e) => {
+    e.stopPropagation()
+    const el = videoRef.current
+    if (!el) return
+    const nextMuted = !isMuted
+    el.muted = nextMuted
+    setIsMuted(nextMuted)
   }
 
   useEffect(() => {
@@ -74,7 +84,7 @@ function VideoCard({ video, index }) {
           poster={video.poster}
           playsInline
           preload="metadata"
-          muted
+          muted={isMuted}
         >
           <source src={video.src} />
           Your browser does not support the video tag.
@@ -98,6 +108,15 @@ function VideoCard({ video, index }) {
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
+        </button>
+
+        <button
+          className="video-card__mute"
+          onClick={toggleMute}
+          aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+          type="button"
+        >
+          {isMuted ? '🔇' : '🔊'}
         </button>
 
         <span className="video-card__chip">
