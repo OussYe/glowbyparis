@@ -12,7 +12,12 @@
       "Bash(git remote add:*)",
       "Bash(git push:*)",
       "Bash(curl:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(Remove-Item \"public\\\\images\\\\11.jpg\")",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Maintenance\\\\Desktop\\\\glowbyparis\\\\website\" pull)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Maintenance\\\\Desktop\\\\glowbyparis\\\\website\" stash pop)"
     ]
   }
 }

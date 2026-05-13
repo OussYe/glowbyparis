@@ -249,14 +249,23 @@
 }
 
 @media (max-width: 640px) {
+  .hero__container {
+    gap: var(--space-8);
+  }
+
+  .hero__visual {
+    min-height: auto;
+    gap: var(--space-3);
+  }
+
   .hero__video-wrapper {
     justify-content: center;
     width: 100%;
   }
 
   .hero__video-frame {
-    width: 90vw !important;
-    max-width: 400px !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 

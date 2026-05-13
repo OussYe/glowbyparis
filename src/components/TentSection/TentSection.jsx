@@ -43,8 +43,12 @@ const galleryImages = [
 
 function VideoCard({ video, index }) {
   const videoRef = useRef(null)
+  const progressRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
 
   const togglePlay = () => {
     const el = videoRef.current
@@ -67,13 +71,77 @@ function VideoCard({ video, index }) {
     setIsMuted(nextMuted)
   }
 
+  const handleTimeUpdate = () => {
+    const el = videoRef.current
+    if (!el) return
+    setCurrentTime(el.currentTime)
+  }
+
+  const handleLoadedMetadata = () => {
+    const el = videoRef.current
+    if (!el) return
+    setDuration(el.duration)
+  }
+
+  const handleProgressClick = (e) => {
+    e.stopPropagation()
+    const progressBar = progressRef.current
+    const video = videoRef.current
+    if (!progressBar || !video) return
+
+    const rect = progressBar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const progressWidth = rect.width
+    const newTime = (clickX / progressWidth) * duration
+
+    video.currentTime = Math.max(0, Math.min(duration, newTime))
+    setCurrentTime(newTime)
+  }
+
+  const handleMouseDown = (e) => {
+    e.stopPropagation()
+    setIsDragging(true)
+    handleProgressClick(e)
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return
+    handleProgressClick(e)
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
+
     const onEnd = () => setIsPlaying(false)
+    const onTimeUpdate = handleTimeUpdate
+    const onLoadedMetadata = handleLoadedMetadata
+
     el.addEventListener('ended', onEnd)
-    return () => el.removeEventListener('ended', onEnd)
+    el.addEventListener('timeupdate', onTimeUpdate)
+    el.addEventListener('loadedmetadata', onLoadedMetadata)
+
+    return () => {
+      el.removeEventListener('ended', onEnd)
+      el.removeEventListener('timeupdate', onTimeUpdate)
+      el.removeEventListener('loadedmetadata', onLoadedMetadata)
+    }
   }, [])
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging])
 
   return (
     <div className={`video-card ${isPlaying ? 'video-card--playing' : ''}`}>
@@ -122,6 +190,21 @@ function VideoCard({ video, index }) {
         <span className="video-card__chip">
           Ch. 0{index + 1} · {video.duration}
         </span>
+
+        {/* Progress Bar */}
+        <div className="video-card__progress-container">
+          <div
+            ref={progressRef}
+            className="video-card__progress-bar"
+            onClick={handleProgressClick}
+            onMouseDown={handleMouseDown}
+          >
+            <div
+              className="video-card__progress-fill"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="video-card__body">
