@@ -3,6 +3,13 @@ import './TentSection.css'
 
 const videos = [
   {
+    src: '/videos/folding_usine.mp4',
+    title: 'Factory Folding Demo',
+    subtitle: 'See the tent fold smoothly in a real factory setting.',
+    duration: 'Factory',
+    poster: '/images/folding_poster.jpg',
+  },
+  {
     src: '/videos/folding_tent.mp4',
     title: 'How To Fold The Tent',
     subtitle: 'Fold it back into its compact carry bag in under 10 seconds.',
