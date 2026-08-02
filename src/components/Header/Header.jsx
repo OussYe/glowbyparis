@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import './Header.css'
 
 function Header() {
@@ -26,6 +27,11 @@ function Header() {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
+
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isMenuOpen])
 
   return (
     <header className={`header ${isScrolled ? 'header--scrolled' : ''}`}>
@@ -105,12 +111,13 @@ function Header() {
           </a>
         </nav>
 
-        {isMenuOpen && (
+        {isMenuOpen && createPortal(
           <div
             className="header__overlay"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
-          />
+          />,
+          document.body
         )}
       </div>
     </header>

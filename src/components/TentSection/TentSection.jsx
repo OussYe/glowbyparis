@@ -56,6 +56,28 @@ function VideoCard({ video, index }) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [thumbSrc, setThumbSrc] = useState(null)
+
+  useEffect(() => {
+    if (video.poster) return
+    const el = videoRef.current
+    if (!el) return
+    const capture = () => {
+      if (!el.videoWidth) return
+      const canvas = document.createElement('canvas')
+      canvas.width = el.videoWidth
+      canvas.height = el.videoHeight
+      canvas.getContext('2d').drawImage(el, 0, 0)
+      setThumbSrc(canvas.toDataURL('image/jpeg', 0.85))
+    }
+    const onMeta = () => { el.currentTime = 0.001 }
+    el.addEventListener('loadedmetadata', onMeta, { once: true })
+    el.addEventListener('seeked', capture, { once: true })
+    return () => {
+      el.removeEventListener('loadedmetadata', onMeta)
+      el.removeEventListener('seeked', capture)
+    }
+  }, [])
 
   const togglePlay = () => {
     const el = videoRef.current
@@ -164,6 +186,10 @@ function VideoCard({ video, index }) {
           <source src={video.src} />
           Your browser does not support the video tag.
         </video>
+
+        {thumbSrc && !isPlaying && (
+          <img src={thumbSrc} alt="" className="video-card__thumb" aria-hidden="true" />
+        )}
 
         <button
           className="video-card__play"
