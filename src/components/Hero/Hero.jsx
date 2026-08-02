@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './Hero.css'
 
-function HeroVideo({ src, poster }) {
+function HeroVideo({ src, poster, onEnded }) {
   const videoRef = useRef(null)
   const frameRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -12,6 +12,39 @@ function HeroVideo({ src, poster }) {
   const [duration, setDuration] = useState(0)
   const [showControls, setShowControls] = useState(false)
   const hideTimerRef = useRef(null)
+  const isDragging = useRef(false)
+  const progressRef = useRef(null)
+  const [dragging, setDragging] = useState(false)
+  const onEndedRef = useRef(onEnded)
+  useEffect(() => { onEndedRef.current = onEnded }, [onEnded])
+
+  const getSeekTime = (clientX) => {
+    const el = videoRef.current
+    const bar = progressRef.current
+    if (!el || !bar) return null
+    const rect = bar.getBoundingClientRect()
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    return ratio * (el.duration || 0)
+  }
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (!isDragging.current) return
+      const time = getSeekTime(e.clientX)
+      if (time !== null) videoRef.current.currentTime = time
+    }
+    const onMouseUp = () => {
+      if (!isDragging.current) return
+      isDragging.current = false
+      setDragging(false)
+    }
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -36,17 +69,20 @@ function HeroVideo({ src, poster }) {
     const onMetadata = () => setDuration(el.duration)
     const onPlay = () => setIsPlaying(true)
     const onPause = () => setIsPlaying(false)
+    const onEnded = () => onEndedRef.current?.()
 
     el.addEventListener('timeupdate', onTimeUpdate)
     el.addEventListener('loadedmetadata', onMetadata)
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
+    el.addEventListener('ended', onEnded)
 
     return () => {
       el.removeEventListener('timeupdate', onTimeUpdate)
       el.removeEventListener('loadedmetadata', onMetadata)
       el.removeEventListener('play', onPlay)
       el.removeEventListener('pause', onPause)
+      el.removeEventListener('ended', onEnded)
     }
   }, [])
 
@@ -96,12 +132,12 @@ function HeroVideo({ src, poster }) {
     el.currentTime = Math.max(0, Math.min(el.duration || 0, el.currentTime + seconds))
   }
 
-  const handleProgressClick = (e) => {
+  const handleProgressMouseDown = (e) => {
     e.stopPropagation()
-    const el = videoRef.current
-    if (!el) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    el.currentTime = ((e.clientX - rect.left) / rect.width) * (el.duration || 0)
+    isDragging.current = true
+    setDragging(true)
+    const time = getSeekTime(e.clientX)
+    if (time !== null) videoRef.current.currentTime = time
   }
 
   const formatTime = (s) => {
@@ -128,13 +164,16 @@ function HeroVideo({ src, poster }) {
         poster={poster}
         autoPlay
         muted={isMuted}
-        loop
         playsInline
         preload="auto"
       />
 
       <div className={`hero__vc${showControls ? ' hero__vc--visible' : ''}`}>
-        <div className="hero__vc-progress" onClick={handleProgressClick}>
+        <div
+          className={`hero__vc-progress${dragging ? ' hero__vc-progress--dragging' : ''}`}
+          ref={progressRef}
+          onMouseDown={handleProgressMouseDown}
+        >
           <div className="hero__vc-bar" style={{ width: `${progress}%` }} />
           <div className="hero__vc-thumb" style={{ left: `${progress}%` }} />
         </div>
@@ -228,17 +267,73 @@ function HeroVideo({ src, poster }) {
   )
 }
 
+const VIDEOS = [
+  {
+    src: '/videos/Marine_two_parts.mp4',
+    poster: '/images/folding_poster.jpg',
+    title: 'Fold the tent using the zipper (easiest way)',
+    subtitle: 'Glowby Paris',
+  },
+  {
+    src: '/videos/Marine_full.mp4',
+    poster: '/images/folding_poster.jpg',
+    title: 'Fold the tent without using the zipper',
+    subtitle: 'Glowby Paris',
+  },
+  {
+    src: '/videos/Pink_two_parts.mp4',
+    poster: '/images/folding_poster.jpg',
+    title: 'Fold the tent using the zipper (easiest way)',
+    subtitle: 'Glowby Paris',
+  },
+  {
+    src: '/videos/Pink_Full.mp4',
+    poster: '/images/folding_poster.jpg',
+    title: 'Fold the tent without using the zipper',
+    subtitle: 'Glowby Paris',
+  },
+]
+
+const CIRCUMFERENCE = 2 * Math.PI * 26
+
 function Hero() {
-  const videos = [
-    {
-      src: '/videos/folding_usine.mp4',
-      poster: '/images/folding_poster.jpg',
-    },
-    {
-      src: '/videos/folding_tent.mp4',
-      poster: '/images/folding_poster.jpg',
-    },
-  ]
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [nextIndex, setNextIndex] = useState(null)
+  const [countdown, setCountdown] = useState(5)
+
+  useEffect(() => {
+    if (nextIndex === null) return
+    if (countdown <= 0) {
+      setActiveIndex(nextIndex)
+      setNextIndex(null)
+      setCountdown(5)
+      return
+    }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown, nextIndex])
+
+  const handleVideoEnded = () => {
+    setNextIndex((activeIndex + 1) % VIDEOS.length)
+    setCountdown(5)
+  }
+
+  const playNow = () => {
+    setActiveIndex(nextIndex)
+    setNextIndex(null)
+    setCountdown(5)
+  }
+
+  const cancelNext = () => {
+    setNextIndex(null)
+    setCountdown(5)
+  }
+
+  const selectVideo = (i) => {
+    setActiveIndex(i)
+    setNextIndex(null)
+    setCountdown(5)
+  }
 
   const scrollToSection = (e, sectionId) => {
     e.preventDefault()
@@ -254,10 +349,97 @@ function Hero() {
       </div>
 
       <div className="hero__visual">
-        <div className="hero__video-grid">
-          {videos.map((video) => (
-            <HeroVideo key={video.src} src={video.src} poster={video.poster} />
-          ))}
+        <div className="hero__amazon-layout">
+          <div className="hero__amazon-player">
+            {nextIndex !== null ? (
+              <div className="hero__video-frame">
+                <video
+                  src={`${VIDEOS[nextIndex].src}#t=0.001`}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="hero__video"
+                />
+                <div className="hero__next-overlay">
+                  <p className="hero__next-label">Up next</p>
+                  <p className="hero__next-title">{VIDEOS[nextIndex].title}</p>
+                  <div className="hero__next-countdown">
+                    <svg viewBox="0 0 60 60" className="hero__next-ring">
+                      <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
+                      <circle
+                        cx="30" cy="30" r="26"
+                        fill="none"
+                        stroke="var(--color-accent)"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeDasharray={CIRCUMFERENCE}
+                        strokeDashoffset={CIRCUMFERENCE * (1 - countdown / 5)}
+                        transform="rotate(-90 30 30)"
+                        style={{ transition: 'stroke-dashoffset 1s linear' }}
+                      />
+                    </svg>
+                    <span className="hero__next-number">{countdown}</span>
+                  </div>
+                  <div className="hero__next-actions">
+                    <button className="hero__next-btn hero__next-btn--play" onClick={playNow}>
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      Play now
+                    </button>
+                    <button className="hero__next-btn" onClick={cancelNext}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <HeroVideo
+                key={VIDEOS[activeIndex].src}
+                src={VIDEOS[activeIndex].src}
+                poster={VIDEOS[activeIndex].poster}
+                onEnded={handleVideoEnded}
+              />
+            )}
+          </div>
+
+          <div className="hero__amazon-sidebar">
+            <p className="hero__amazon-sidebar-title">Videos for this product</p>
+            <ul className="hero__amazon-list">
+              {VIDEOS.map((video, i) => (
+                <li
+                  key={video.src}
+                  className={`hero__amazon-item${i === activeIndex ? ' hero__amazon-item--active' : ''}${i === nextIndex ? ' hero__amazon-item--next' : ''}`}
+                  onClick={() => selectVideo(i)}
+                >
+                  <div className="hero__amazon-thumb">
+                    <video
+                      src={`${video.src}#t=0.001`}
+                      muted
+                      preload="metadata"
+                      className="hero__amazon-thumb-video"
+                    />
+                    {i === activeIndex ? (
+                      <div className="hero__amazon-badge hero__amazon-badge--playing">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                        Now playing
+                      </div>
+                    ) : (
+                      <div className="hero__amazon-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="hero__amazon-item-info">
+                    <p className="hero__amazon-item-title">{video.title}</p>
+                    <p className="hero__amazon-item-sub">{video.subtitle}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 

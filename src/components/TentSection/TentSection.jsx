@@ -3,18 +3,18 @@ import './TentSection.css'
 
 const videos = [
   {
-    src: '/videos/folding_usine.mp4',
-    title: 'Factory Folding Demo',
-    subtitle: 'See the tent fold smoothly in a real factory setting.',
-    duration: 'Factory',
-    poster: '/images/folding_poster.jpg',
+    src: '/videos/Pink_two_parts.mp4',
+    title: 'Fold With the Zipper',
+    subtitle: 'The step-by-step method using the built-in zipper — clean, simple, and repeatable every time.',
+    duration: 'Zipper',
+    poster: null,
   },
   {
-    src: '/videos/folding_tent.mp4',
-    title: 'How To Fold The Tent',
-    subtitle: 'Fold it back into its compact carry bag in under 10 seconds.',
-    duration: 'Fold',
-    poster: '/images/folding_poster.jpg',
+    src: '/videos/Marine_full.mp4',
+    title: 'Fold in One Move',
+    subtitle: 'Skip the zipper and master the single-motion fold — packed flat in under 10 seconds.',
+    duration: 'One Move',
+    poster: null,
   },
   {
     src: '/videos/presentation.mov',
@@ -156,7 +156,7 @@ function VideoCard({ video, index }) {
         <video
           ref={videoRef}
           className="video-card__video"
-          poster={video.poster}
+          poster={video.poster || undefined}
           playsInline
           preload="metadata"
           muted={isMuted}
