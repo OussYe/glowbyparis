@@ -58,6 +58,7 @@ function HeroVideo({ src, poster, onEnded }) {
     const el = videoRef.current
     if (!el) return
 
+    el.muted = true
     const tryPlay = () => el.play().catch(() => {})
     if (el.readyState >= 2) tryPlay()
     else el.addEventListener('loadeddata', tryPlay, { once: true })
