@@ -28,30 +28,41 @@ function HeroVideo({ src, poster, onEnded }) {
   }
 
   useEffect(() => {
-    const onMouseMove = (e) => {
+    const getX = (e) => e.touches?.[0]?.clientX ?? e.changedTouches?.[0]?.clientX ?? e.clientX
+    const onMove = (e) => {
       if (!isDragging.current) return
-      const time = getSeekTime(e.clientX)
+      if (e.cancelable) e.preventDefault()
+      const time = getSeekTime(getX(e))
       if (time !== null) videoRef.current.currentTime = time
     }
-    const onMouseUp = () => {
+    const onUp = () => {
       if (!isDragging.current) return
       isDragging.current = false
       setDragging(false)
     }
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    document.addEventListener('touchmove', onMove, { passive: false })
+    document.addEventListener('touchend', onUp)
     return () => {
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.removeEventListener('touchmove', onMove)
+      document.removeEventListener('touchend', onUp)
     }
   }, [])
 
   useEffect(() => {
-    const onFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement === frameRef.current))
+    const onFsChange = () => {
+      const el = document.fullscreenElement || document.webkitFullscreenElement
+      setIsFullscreen(Boolean(el && (el === frameRef.current || el === videoRef.current)))
     }
-    document.addEventListener('fullscreenchange', onFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+    document.addEventListener('fullscreenchange', onFsChange)
+    document.addEventListener('webkitfullscreenchange', onFsChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange)
+      document.removeEventListener('webkitfullscreenchange', onFsChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -118,11 +129,15 @@ function HeroVideo({ src, poster, onEnded }) {
   const toggleFullscreen = (e) => {
     e.stopPropagation()
     const frame = frameRef.current
-    if (!frame) return
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {})
+    const video = videoRef.current
+    if (!frame || !video) return
+    const isFs = document.fullscreenElement || document.webkitFullscreenElement
+    if (isFs) {
+      ;(document.exitFullscreen || document.webkitExitFullscreen).call(document).catch(() => {})
     } else if (frame.requestFullscreen) {
       frame.requestFullscreen().catch(() => {})
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen()
     }
   }
 
@@ -133,11 +148,12 @@ function HeroVideo({ src, poster, onEnded }) {
     el.currentTime = Math.max(0, Math.min(el.duration || 0, el.currentTime + seconds))
   }
 
-  const handleProgressMouseDown = (e) => {
+  const handleProgressStart = (e) => {
     e.stopPropagation()
     isDragging.current = true
     setDragging(true)
-    const time = getSeekTime(e.clientX)
+    const clientX = e.touches?.[0]?.clientX ?? e.clientX
+    const time = getSeekTime(clientX)
     if (time !== null) videoRef.current.currentTime = time
   }
 
@@ -157,6 +173,7 @@ function HeroVideo({ src, poster, onEnded }) {
         setShowControls(false)
       }}
       onClick={handleFrameClick}
+      onTouchStart={revealControls}
     >
       <video
         ref={videoRef}
@@ -173,7 +190,8 @@ function HeroVideo({ src, poster, onEnded }) {
         <div
           className={`hero__vc-progress${dragging ? ' hero__vc-progress--dragging' : ''}`}
           ref={progressRef}
-          onMouseDown={handleProgressMouseDown}
+          onMouseDown={handleProgressStart}
+          onTouchStart={handleProgressStart}
         >
           <div className="hero__vc-bar" style={{ width: `${progress}%` }} />
           <div className="hero__vc-thumb" style={{ left: `${progress}%` }} />
